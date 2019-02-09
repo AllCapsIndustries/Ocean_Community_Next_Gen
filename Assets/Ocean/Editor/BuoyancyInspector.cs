@@ -322,6 +322,7 @@ public class BuoyancyInspector  : Editor{
 					swr.Write(buoyancy.slideFactor);//float
 					swr.Write(buoyancy.moreAccurate);//bool
 					swr.Write(buoyancy.useFixedUpdate);//bool
+					swr.Write(buoyancy.showWake);//bool
 
 					var bc = buoyancy.GetComponent<BoatController>();
 
@@ -410,6 +411,7 @@ public class BuoyancyInspector  : Editor{
 							if(br.BaseStream.Position != br.BaseStream.Length) buoyancy.slideFactor = br.ReadSingle();
 							if(br.BaseStream.Position != br.BaseStream.Length) buoyancy.moreAccurate = br.ReadBoolean();
 							if(br.BaseStream.Position != br.BaseStream.Length) buoyancy.useFixedUpdate = br.ReadBoolean();
+							if(br.BaseStream.Position != br.BaseStream.Length) buoyancy.showWake = br.ReadBoolean();
 							bool hasBoatController = false;
 							if(br.BaseStream.Position != br.BaseStream.Length) {
 								hasBoatController = br.ReadBoolean();
