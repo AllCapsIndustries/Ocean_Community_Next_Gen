@@ -1022,17 +1022,15 @@ public class Ocean : MonoBehaviour {
 
 				if (ifoamStrength > 0) {
 					for (int i = 0; i < wakeObjects.Count; i++) {
-						Vector3 wakeObjPos = wakeObjects[i].position;
-						//wakeObjPos.y = 0f;
-						Vector3 player2Vertex = (wakeObjPos - vertices[item] - currentPosition) * ifoamWidth;
-						if (player2Vertex.x >= size.x) continue;
-						if (player2Vertex.x <= -size.x) continue;
-						if (player2Vertex.z >= size.z) continue;
-						if (player2Vertex.z <= -size.z) continue;
-						// if (player2Vertex.x >= size.x) player2Vertex.x -= size.x;
-						// if (player2Vertex.x <= -size.x) player2Vertex.x += size.x;
-						// if (player2Vertex.z >= size.z) player2Vertex.z -= size.z;
-						// if (player2Vertex.z <= -size.z) player2Vertex.z += size.z;
+						
+						//currentPosition probably isn't necessary in this calculation anymore,
+						//but it seems fine and probably results in wakes not being drawn if very far from the player.
+						Vector3 player2Vertex = (wakeObjects[i].position - vertices[item] - currentPosition) * ifoamWidth;
+						
+						if (player2Vertex.x >= size.x) player2Vertex.x -= size.x;
+						if (player2Vertex.x <= -size.x) player2Vertex.x += size.x;
+						if (player2Vertex.z >= size.z) player2Vertex.z -= size.z;
+						if (player2Vertex.z <= -size.z) player2Vertex.z += size.z;
 
 						player2Vertex.y = 0f;
 
