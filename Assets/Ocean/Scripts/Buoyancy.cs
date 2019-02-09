@@ -41,6 +41,10 @@ public class Buoyancy : MonoBehaviour {
 	public bool sink = false;
 	public float sinkForce = 3;
 
+	//Multi wake
+	private bool showWake = true;
+	//End multi wake
+
 	private float iF; 
 	private bool interpolate = false;
 
@@ -89,6 +93,9 @@ public class Buoyancy : MonoBehaviour {
 		if(SlicesZ<2) SlicesZ=2;
 
         ocean = Ocean.Singleton;
+
+		if (showWake && ocean)
+			ocean.AddWakeObject (transform);
 		
 		rrigidbody.centerOfMass = new Vector3 (0.0f, CenterOfMassOffset, 0.0f);
 	
