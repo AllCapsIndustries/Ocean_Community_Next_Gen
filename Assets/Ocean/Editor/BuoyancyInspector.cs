@@ -222,6 +222,15 @@ public class BuoyancyInspector  : Editor{
 		}
 		EditorGUILayout.EndHorizontal();
 		
+		EditorGUILayout.BeginHorizontal();
+		EditorGUILayout.LabelField("Show Wake",  GUILayout.MaxWidth(130));
+		buoyancy.showWake = EditorGUILayout.Toggle(buoyancy.showWake);
+		GUILayout.Space(175);
+		if(GUILayout.Button("?",GUILayout.MaxWidth(20))) {
+			EditorUtility.DisplayDialog("Show Wake","Show a foam wake for this object","OK");
+		}
+		EditorGUILayout.EndHorizontal();
+		
 		DrawSeparator();
 		
 		GUILayout.Space(8);

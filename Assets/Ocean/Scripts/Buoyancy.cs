@@ -42,7 +42,7 @@ public class Buoyancy : MonoBehaviour {
 	public float sinkForce = 3;
 
 	//Multi wake
-	private bool showWake = true;
+	public bool showWake = true;
 	//End multi wake
 
 	private float iF; 
