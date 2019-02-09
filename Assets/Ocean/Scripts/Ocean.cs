@@ -302,9 +302,12 @@ public class Ocean : MonoBehaviour {
     }
 
 
-    void Start () {
 
+    void Start () {
 		canCheckBuoyancyNow = new byte[1];
+
+		//Multiwake
+		sqrWakeDistance = wakeDistance * wakeDistance;
 
 		//experiment with this value on low end mobiles (default: -1. Read the documentation about it.)
 		//QualitySettings.maxQueuedFrames = 1;
@@ -1032,9 +1035,6 @@ public class Ocean : MonoBehaviour {
 						// if (player2Vertex.z <= -size.z) player2Vertex.z += size.z;
 
 						player2Vertex.y = 0f;
-
-						// Vector2 v2 = new Vector2(player2Vertex.x, player2Vertex.z);
-						// float sqrMag = v2.sqrMagnitude;
 
 						if (player2Vertex.sqrMagnitude > sqrWakeDistance)
 							continue;
