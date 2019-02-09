@@ -111,11 +111,13 @@ public class Ocean : MonoBehaviour {
 	public int wh;
 	public float wh1;
 	float sizeQX, sizeQZ;
+	private float sizeXg_width;
 #if !NATIVE
 	private float hhalf;
 	private float whalf;
 	private int offset;
-	private float sizeXg_width;
+	//Moving this out of native for multi wake.
+	//private float sizeXg_width;
 #else
 	float [] floats;
 	Vector3[] vecs;
@@ -831,6 +833,7 @@ public class Ocean : MonoBehaviour {
 	}
 
 	void calcPhase4x (int a, int b, float deltaTime, Vector3 currentPosition) {
+		//print("calcPhase4x");
 		for (int y = a; y < b; y++) {
 			for (int x = 0; x < g_width; x++) {
 				int item = x + g_width * y;
@@ -929,6 +932,8 @@ public class Ocean : MonoBehaviour {
 #else
 				floats[0] = deltaTime; floats[1] = 	ifoamStrength; floats[2] = wakeDistance; floats[3] = ifoamWidth; floats[4] = foamDuration;
 				vecs[0] = playerPosition; vecs[1] = currentPosition;
+				
+				calcWakeTangents (0, g_height, Time.deltaTime, transform.position);
 				uocean._calcPhase4b(vertices, tangents, floats, isBoat, vecs);
 #endif
 		}
@@ -968,10 +973,15 @@ public class Ocean : MonoBehaviour {
 
 #if !NATIVE
 				//calcPhase4a(0, g_height, Time.deltaTime, player.position, transform.position);
+				//Multi wake
 				calcPhase4x (0, g_height, Time.deltaTime, transform.position);
 #else
 				floats[0] = Time.deltaTime; floats[1] = ifoamStrength; floats[2] = wakeDistance; floats[3] = ifoamWidth; floats[4] = foamDuration;
 				vecs[0] = player.position; vecs[1] = transform.position;
+
+				//Multi wake
+				calcWakeTangents (0, g_height, Time.deltaTime, transform.position);
+
 				uocean._calcPhase4b(vertices, tangents, floats, isBoat, vecs);
 #endif
 		}
@@ -990,6 +1000,53 @@ public class Ocean : MonoBehaviour {
 #else
 			updateTiles(0, max_LOD);
 #endif
+	}
+
+	//Multi wake.
+	void calcWakeTangents (int a, int b, float deltaTime, Vector3 currentPosition) {
+		for (int y = a; y < b; y++) {
+			for (int x = 0; x < g_width; x++) {
+				int item = x + g_width * y;
+				if (x + 1 >= g_width) { tangents[item].w = tangents[g_width * y].w; continue; }
+				if (y + 1 >= g_height) { tangents[item].w = tangents[x].w; continue; }
+
+				float right = vertices[(x + 1) + g_width * y].x - vertices[item].x;
+				float foam = right / sizeXg_width;
+
+				if (foam < 0.0f) tangents[item].w = 1f;
+				else if (foam < 0.5f) tangents[item].w += 3.0f * deltaTime;
+				else tangents[item].w -= foamDuration * deltaTime;
+
+				if (ifoamStrength > 0) {
+					for (int i = 0; i < wakeObjects.Count; i++) {
+						Vector3 wakeObjPos = wakeObjects[i].position;
+						//wakeObjPos.y = 0f;
+						Vector3 player2Vertex = (wakeObjPos - vertices[item] - currentPosition) * ifoamWidth;
+						if (player2Vertex.x >= size.x) continue;
+						if (player2Vertex.x <= -size.x) continue;
+						if (player2Vertex.z >= size.z) continue;
+						if (player2Vertex.z <= -size.z) continue;
+						// if (player2Vertex.x >= size.x) player2Vertex.x -= size.x;
+						// if (player2Vertex.x <= -size.x) player2Vertex.x += size.x;
+						// if (player2Vertex.z >= size.z) player2Vertex.z -= size.z;
+						// if (player2Vertex.z <= -size.z) player2Vertex.z += size.z;
+
+						player2Vertex.y = 0f;
+
+						// Vector2 v2 = new Vector2(player2Vertex.x, player2Vertex.z);
+						// float sqrMag = v2.sqrMagnitude;
+
+						if (player2Vertex.sqrMagnitude > sqrWakeDistance)
+							continue;
+
+						// foam around objects
+						tangents[item].w += ifoamStrength * deltaTime;
+					}
+				}
+
+				tangents[item].w = Mathf.Clamp (tangents[item].w, 0.0f, 4f);
+			}
+		}
 	}
 
 	//update the meshes with the final calculated mesh data
