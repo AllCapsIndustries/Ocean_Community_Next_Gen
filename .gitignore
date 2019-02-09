@@ -69,3 +69,5 @@ sysinfo.txt
 *.unitypackage
 
 #Ignore these directories
+Assets/Ocean/Resources/oceanMaterials/Ocean Material_Lod1.mat
+Assets/Ocean/Resources/oceanMaterials/Ocean Material.mat

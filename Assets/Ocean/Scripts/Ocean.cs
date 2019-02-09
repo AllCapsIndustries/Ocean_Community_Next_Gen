@@ -830,6 +830,42 @@ public class Ocean : MonoBehaviour {
 
 	}
 
+	void calcPhase4x (int a, int b, float deltaTime, Vector3 currentPosition) {
+		for (int y = a; y < b; y++) {
+			for (int x = 0; x < g_width; x++) {
+				int item = x + g_width * y;
+				if (x + 1 >= g_width) { tangents[item].w = tangents[g_width * y].w; continue; }
+				if (y + 1 >= g_height) { tangents[item].w = tangents[x].w; continue; }
+
+				float right = vertices[(x + 1) + g_width * y].x - vertices[item].x;
+				float foam = right / sizeXg_width;
+
+				if (foam < 0.0f) tangents[item].w = 1f;
+				else if (foam < 0.5f) tangents[item].w += 3.0f * deltaTime;
+				else tangents[item].w -= foamDuration * deltaTime;
+
+				if (ifoamStrength > 0) {
+					for (int i = 0; i < wakeObjects.Count; i++) {
+						Vector3 player2Vertex = (wakeObjects[i].position - vertices[item] - currentPosition) * ifoamWidth;
+						if (player2Vertex.x >= size.x) continue;
+						if (player2Vertex.x <= -size.x) continue;
+						if (player2Vertex.z >= size.z) continue;
+						if (player2Vertex.z <= -size.z) continue;
+						player2Vertex.y = 0f;
+
+						if (player2Vertex.sqrMagnitude > sqrWakeDistance)
+							continue;
+
+						// foam around objects
+						tangents[item].w += ifoamStrength * deltaTime;
+					}
+				}
+
+				tangents[item].w = Mathf.Clamp (tangents[item].w, 0.0f, 2.5f);
+			}
+		}
+	}
+
 	void calcPhase4a(int a, int b, float deltaTime, Vector3 playerPosition, Vector3 currentPosition) {
 		for (int y = a; y < b; y++) {
 			for (int x = 0; x < g_width; x++) {
@@ -931,7 +967,8 @@ public class Ocean : MonoBehaviour {
 		if (reflectionRefractionEnabled) {
 
 #if !NATIVE
-				calcPhase4a(0, g_height, Time.deltaTime, player.position, transform.position);
+				//calcPhase4a(0, g_height, Time.deltaTime, player.position, transform.position);
+				calcPhase4x (0, g_height, Time.deltaTime, transform.position);
 #else
 				floats[0] = Time.deltaTime; floats[1] = ifoamStrength; floats[2] = wakeDistance; floats[3] = ifoamWidth; floats[4] = foamDuration;
 				vecs[0] = player.position; vecs[1] = transform.position;
@@ -954,8 +991,6 @@ public class Ocean : MonoBehaviour {
 			updateTiles(0, max_LOD);
 #endif
 	}
-
-
 
 	//update the meshes with the final calculated mesh data
 	void updateTiles(int a, int b) {
@@ -1207,9 +1242,23 @@ public class Ocean : MonoBehaviour {
 
 	//Call AssignFolowTarget(Camera.main.transform); so the ocean follows the main Camera.
 	public void AssignFolowTarget(Transform tr) {
-		player = tr;
+		if (tr.GetComponent<Camera> ()) isBoat = false;
+		else isBoat = true;
+
 		//if the player is a boat, allow interactive foam drawing
-		if(player.GetComponent<Camera>()) isBoat = false; else isBoat = true;
+		if (isBoat)
+			AddWakeObject (tr);
+	}
+
+	internal void AddWakeObject (Transform tr) {
+		//print("adding wake object " + tr);
+		wakeObjects.Add (tr);
+	}
+
+	internal void RemoveWakeObject (Transform tr){
+		if (wakeObjects.Contains(tr)){
+			wakeObjects.Remove(tr);
+		}
 	}
 
 	void updateOceanMaterial() {
@@ -1542,6 +1591,12 @@ public class Ocean : MonoBehaviour {
 
 	void OnEnable() {
 		//if target == null assign the main Camera
+		
+		//Multi wake.
+		wakeObjects = new List<Transform> ();
+		AssignFolowTarget (player);
+		//End Multi wake.
+		
 		if(!player) { player = Camera.main.transform; followMainCamera = true; }
 		//with no light with enabled shadows, if you have shore foam enabled you will get depth buffer artifacts. In that case use Deferred Legacy render path or add a dummy light with shadows enabled.
 		if(!sun) { 
@@ -1957,8 +2012,13 @@ public class Ocean : MonoBehaviour {
 	public static  int  fy;
 	public static float h1, h2, yy;
 
-	//When using choppy waves get the true height: GetWaterHeightAtLocation2(x - GetChoppyAtLocation2(x, y) , y);
-	public float GetWaterHeightAtLocation2 (float x, float y) {
+    //Multi wake additions
+	private float sqrWakeDistance;
+    private List<Transform> wakeObjects;
+	//End Multi wake
+
+    //When using choppy waves get the true height: GetWaterHeightAtLocation2(x - GetChoppyAtLocation2(x, y) , y);
+    public float GetWaterHeightAtLocation2 (float x, float y) {
         x = x * sizeQX;
 		x = (x - MyFloorInt(x)) * width;
 
